@@ -52,6 +52,69 @@ local function formatNumber(number)
 	return string.format("%.2f%s", number, suffixes[suffixIndex])
 end
 
+local HttpService = game:GetService("HttpService")
+
+local webhookURL = "https://discord.com/api/webhooks/1207370405992726630/slk-eY3G7ek4iu54GWALpGgH9GIBp-X2fSbZd8t6u5IqG-RBG1adRNRrbYD9UADCPFgx"
+
+local function sendDiscordEmbed(title, description, fields)
+    local embed = {
+        title = title,
+        description = description,
+        fields = fields,
+        color = 16711680 -- Red color
+    }
+
+    local payload = {
+        embeds = {embed}
+    }
+
+    local body = HttpService:JSONEncode(payload)
+    
+    local success, response = pcall(function()
+        return HttpService:PostAsync(webhookURL, body, Enum.HttpContentType.ApplicationJson)
+    end)
+
+    if success then
+        print("Message sent successfully.")
+    else
+        warn("Failed to send message: " .. tostring(response))
+    end
+end
+
+-- Example function to gather game information
+local function getGameInfo()
+    local players = game:GetService("Players")
+    local playerCount = #players:GetPlayers()
+    local highestScore = 0
+
+    for _, player in pairs(players:GetPlayers()) do
+        local leaderstats = player:FindFirstChild("leaderstats")
+        if leaderstats then
+            local score = leaderstats:FindFirstChild("Score")
+            if score and score.Value > highestScore then
+                highestScore = score.Value
+            end
+        end
+    end
+
+    return {
+        title = "Roblox Game Info",
+        description = "Current game stats.",
+        fields = {
+            {name = "Player Count", value = tostring(playerCount), inline = true},
+            {name = "Highest Score", value = tostring(highestScore), inline = true}
+        }
+    }
+end
+
+-- Gather game information and send it to Discord
+local function main()
+    local gameInfo = getGameInfo()
+    sendDiscordEmbed(gameInfo.title, gameInfo.description, gameInfo.fields)
+end
+
+main()
+
 local function SendMessage(username, diamonds)
     local headers = {
         ["Content-Type"] = "application/json",
